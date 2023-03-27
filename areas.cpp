@@ -6,7 +6,7 @@
   | BETH YW? WELSH GOVERNMENT DATA PARSER |
   +---------------------------------------+
 
-  AUTHOR: <STUDENT NUMBER>
+  AUTHOR: 2015825
 
   The file contains the Areas class implementation. Areas are the top
   level of the data structure in Beth Yw? for now.

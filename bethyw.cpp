@@ -6,7 +6,7 @@
   | BETH YW? WELSH GOVERNMENT DATA PARSER |
   +---------------------------------------+
 
-  AUTHOR: <STUDENT NUMBER>
+  AUTHOR: 2015825
 
   This file contains all the helper functions for initialising and running
   Beth Yw? In languages such as Java, this would be a class, but we really
@@ -65,10 +65,10 @@ int BethYw::run(int argc, char *argv[]) {
   std::string dir = args["dir"].as<std::string>() + DIR_SEP;
 
   // Parse other arguments and import data
-  // auto datasetsToImport = BethYw::parseDatasetsArg(args);
-  // auto areasFilter      = BethYw::parseAreasArg(args);
-  // auto measuresFilter   = BethYw::parseMeasuresArg(args);
-  // auto yearsFilter      = BethYw::parseYearsArg(args);
+  auto datasetsToImport = BethYw::parseDatasetsArg(args);
+  auto areasFilter      = BethYw::parseAreasArg(args);
+  auto measuresFilter   = BethYw::parseMeasuresArg(args);
+  auto yearsFilter      = BethYw::parseYearsArg(args);
 
   Areas data = Areas();
 
@@ -178,9 +178,7 @@ cxxopts::Options BethYw::cxxoptsSetup() {
  */
 std::vector<BethYw::InputFileSource> BethYw::parseDatasetsArg(
     cxxopts::ParseResult& args) {
-  // This function is incomplete, but to get you started...
-  // You may want to delete much of these // comments too!
-
+  
   // Retrieve all valid datasets, see datasets.h
   size_t numDatasets = InputFiles::NUM_DATASETS;
   auto &allDatasets = InputFiles::DATASETS;
@@ -188,22 +186,51 @@ std::vector<BethYw::InputFileSource> BethYw::parseDatasetsArg(
   // Create the container for the return type
   std::vector<InputFileSource> datasetsToImport;
 
-  // You can get the std::vector of arguments from cxxopts like this.
-  // Note that this function will throw an exception if datasets is not set as 
-  // an argument. Check the documentation! Read it and understand it.
+  // Get the std::vector of arguments from cxxopts
   auto inputDatasets = args["datasets"].as<std::vector<std::string>>();
 
-  // You now need to compare the strings in this vector to the keys in
-  // allDatasets above. Populate datasetsToImport with the values
-  // from allDatasets above and then return a vector
-
-  // You'll want to ignore/remove the following lines of code, they simply
-  // import all datasets (for now) as an example to get you started
-  for(unsigned int i = 0; i < numDatasets; i++)
+  // Check if the "datasets" argument was set
+  if (inputDatasets.empty()) {
+    // If not set, add all datasets to the vector and return
+    for(unsigned int i = 0; i < numDatasets; i++)
       datasetsToImport.push_back(allDatasets[i]);
+    return datasetsToImport;
+  }
+
+  // Check if the "datasets" argument contains the string "all"
+  bool importAll = false;
+  for (auto& dataset : inputDatasets) {
+    if (dataset == "all") {
+      importAll = true;
+      break;
+    }
+  }
+
+  // If "all" was specified, add all datasets to the vector and return
+  if (importAll) {
+    for(unsigned int i = 0; i < numDatasets; i++)
+      datasetsToImport.push_back(allDatasets[i]);
+    return datasetsToImport;
+  }
+
+  // If specific datasets were specified, validate them against the codes in allDatasets
+  for (auto& dataset : inputDatasets) {
+    bool found = false;
+    for (unsigned int i = 0; i < numDatasets; i++) {
+      if (dataset == allDatasets[i].CODE) {
+        found = true;
+        datasetsToImport.push_back(allDatasets[i]);
+        break;
+      }
+    }
+    if (!found) {
+      throw std::invalid_argument("No dataset matches key: " + dataset);
+    }
+  }
 
   return datasetsToImport;
 }
+
 
 /*
   TODO: BethYw::parseAreasArg(args)
@@ -232,16 +259,31 @@ std::vector<BethYw::InputFileSource> BethYw::parseDatasetsArg(
 */
 std::unordered_set<std::string> BethYw::parseAreasArg(
     cxxopts::ParseResult& args) {
+
   // The unordered set you will return
   std::unordered_set<std::string> areas;
 
   // Retrieve the areas argument like so:
   auto temp = args["areas"].as<std::vector<std::string>>();
-  
-  // ...
-  
+
+  // If the areas argument exists
+  if (!temp.empty()) {
+    // Check if it contains the value "all"
+    std::transform(temp[0].begin(), temp[0].end(), temp[0].begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    if (temp[0] == "all") {
+      return areas;
+    }
+
+    // Iterate over the list of areas and add them to the set
+    for (const auto& area : temp) {
+      areas.insert(area);
+    }
+  }
+
   return areas;
 }
+
 
 /*
   TODO: BethYw::parseMeasuresArg(args)
@@ -268,6 +310,34 @@ std::unordered_set<std::string> BethYw::parseAreasArg(
     std::invalid_argument if the argument contains an invalid measures value
     with the message: Invalid input for measures argument
 */
+std::unordered_set<std::string> BethYw::parseMeasuresArg(
+    cxxopts::ParseResult& args) {
+  // The unordered set you will return
+  std::unordered_set<std::string> measures;
+
+  // Retrieve the measures argument like so:
+  auto temp = args["measures"].as<std::vector<std::string>>();
+
+  // Convert all measure values to lowercase
+  for (auto& measure : temp) {
+    std::transform(measure.begin(), measure.end(), measure.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+  }
+
+  // Check if the "all" value is present in the input vector
+  auto allIt = std::find(temp.begin(), temp.end(), "all");
+  if (allIt != temp.end()) {
+    // If "all" is present, simply return an empty set, meaning all measures will be imported
+    return measures;
+  }
+
+  // Otherwise, populate the measures unordered_set with the values in temp
+  for (const auto& measure : temp) {
+    measures.emplace(measure);
+  }
+
+  return measures;
+}
 
 
 /*
@@ -293,6 +363,46 @@ std::unordered_set<std::string> BethYw::parseAreasArg(
     std::invalid_argument if the argument contains an invalid years value with
     the message: Invalid input for years argument
 */
+std::tuple<unsigned int, unsigned int> BethYw::parseYearsArg(cxxopts::ParseResult& args) {
+  unsigned int startYear = 0, endYear = 0;
+  auto temp = args["years"].as<std::string>();
+
+  if (temp.empty()) {
+    return std::make_tuple(startYear, endYear);
+  }
+
+  // Check if it's in the format YYYY or YYYY-ZZZZ
+  auto pos = temp.find("-");
+  if (pos == std::string::npos) {
+    try {
+      startYear = std::stoi(temp);
+      endYear = startYear;
+    }
+    catch (const std::exception&) {
+      throw std::invalid_argument("Invalid input for years argument");
+    }
+  }
+  else {
+    try {
+      startYear = std::stoi(temp.substr(0, pos));
+      endYear = std::stoi(temp.substr(pos + 1));
+    }
+    catch (const std::exception&) {
+      throw std::invalid_argument("Invalid input for years argument");
+    }
+  }
+
+  if (startYear == 0 && endYear == 0) {
+    return std::make_tuple(startYear, endYear);
+  }
+  else if (startYear == 0 || endYear == 0 || startYear > endYear) {
+    throw std::invalid_argument("Invalid input for years argument");
+  }
+
+  return std::make_tuple(startYear, endYear);
+}
+
+
 
 
 /*

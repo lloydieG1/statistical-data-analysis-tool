@@ -6,7 +6,7 @@
   | BETH YW? WELSH GOVERNMENT DATA PARSER |
   +---------------------------------------+
 
-  AUTHOR: <STUDENT NUMBER>
+  AUTHOR: 2015825
 
   This file contains declarations for the helper functions for initialising and
   running Beth Yw?
@@ -35,7 +35,7 @@ namespace BethYw {
 /*
   TODO: Enter your student number here!
 */
-const std::string STUDENT_NUMBER = "987654";
+const std::string STUDENT_NUMBER = "2015825";
 
 /*
   Run Beth Yw?, parsing the command line arguments and acting upon them.
@@ -59,6 +59,12 @@ std::vector<BethYw::InputFileSource> parseDatasetsArg(
   areas to import, or an empty set if all areas should be imported.
 */
 std::unordered_set<std::string> parseAreasArg(cxxopts::ParseResult& args);
+
+std::unordered_set<std::string> parseMeasuresArg(cxxopts::ParseResult& args);
+
+std::tuple<unsigned int, unsigned int> BethYw::parseYearsArg(
+    cxxopts::ParseResult& args);
+
 
 } // namespace BethYw
 
