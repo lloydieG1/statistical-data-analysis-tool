@@ -20,7 +20,7 @@ elif [ $# -eq 1 ]; then
 
     # Do we need to compile Catch2?
     if [ ! -f ./${BIN_DIR}/catch.o ]; then
-      g++ --std=c++11 -c ./lib_catch_main.cpp -o ./${BIN_DIR}/catch.o
+      g++ --std=c++11 -D CATCH_CONFIG_NO_POSIX_SIGNALS -c ./lib_catch_main.cpp -o ./${BIN_DIR}/catch.o
     fi
   fi
 fi

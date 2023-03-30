@@ -35,8 +35,16 @@
   and perhaps additional operators you may wish to overload.
 */
 class InputSource {
+public:
+  InputSource() = delete; // Default constructor deleted
+  virtual ~InputSource() = default; // Virtual destructor for polymorphism
+  
+  InputSource(const std::string& source) : m_source(source) {}
+
+  virtual std::string getData() = 0;
+
 protected:
-  InputSource(const std::string& source);
+  std::string m_source;
 };
 
 /*
@@ -50,6 +58,15 @@ protected:
 class InputFile : public InputSource {
 public:
   InputFile(const std::string& filePath);
+
+  // Returns a string with the contents of the file
+  std::string getContent() const;
+
+  // Returns the file path
+  std::string getFilePath() const;
+
+private:
+  std::string m_filePath;
 };
 
 #endif // INPUT_H_

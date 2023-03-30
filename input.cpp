@@ -18,6 +18,7 @@
  */
 
 #include "input.h"
+#include <sstream>
 
 /*
   TODO: InputSource::InputSource(source)
@@ -27,9 +28,9 @@
   @param source
     A unique identifier for a source (i.e. the location).
 */
-InputSource::InputSource(const std::string& source) {
-  throw std::logic_error("InputSource::InputSource() has not been implemented!");
-}
+InputSource::InputSource(const std::string& source) : m_source(source) {}
+
+
 
 /*
   TODO: InputSource::getSource()
@@ -52,9 +53,18 @@ InputSource::InputSource(const std::string& source) {
   @example
     InputFile input("data/areas.csv");
 */
-InputFile::InputFile(const std::string& filePath) : InputSource(filePath) {
-  throw std::logic_error("InputFile::InputFile() has not been implemented!");
+InputFile::InputFile(const std::string& filePath) : InputSource(filePath), m_filePath(filePath) {}
+
+std::string InputFile::getContent() const {
+  std::ifstream fileStream(m_filePath);
+  if (fileStream.fail()) {
+    throw std::runtime_error("Failed to open file " + m_filePath);
+  }
+  std::stringstream buffer;
+  buffer << fileStream.rdbuf();
+  return buffer.str();
 }
+
 
 /*
   TODO: InputFile::open()
